@@ -6,6 +6,7 @@ from sys             import exit, argv
 from time            import sleep
 from tqdm            import tqdm
 #from colorama        import init
+from itertools       import chain
 
 def worker(args):
     num_primes, bits, process_id = args
@@ -18,13 +19,14 @@ def worker(args):
     return list(prime_set)
 
 def generate_large_primes_parallel(num_primes, bits, utilization_percentage=80):
-    if cpu_count() > num_primes: num_processes = num_primes
-    else: num_processes = int(cpu_count() * utilization_percentage / 100)
+    num_processes = num_primes
+    if cpu_count() < num_primes: num_primes = cpu_count() * utilization_percentage // 100
+    
     print(num_processes)
     args_list = [(num_primes // num_processes, bits, i) for i in range(num_processes)]
     with Pool(processes=num_processes) as pool: results = list(pool.imap(worker, args_list))
 
-    final_primes = [prime for result in results for prime in result]
+    final_primes = list(chain.from_iterable(results))
     print("\nGeneración de primos completada.")
 
     return final_primes
